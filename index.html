@@ -1,0 +1,302 @@
+
+<!doctype html>
+<html>
+<head>
+  <title>GADARA</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="description" content="gadara, interaction, design, ガダラ, インタラクション" />
+  <link rel="shortcut icon" type="image/gif" href="../images/favicon.gif">
+  <link href="https://fonts.googleapis.com/css?family=Indie+Flower|Shadows+Into+Light" rel="stylesheet">
+  <script src="./libraries/url.js"></script>
+  <script src="./libraries/jquery.js"></script>
+  <script src="./libraries/two.js"></script>
+  <script src="./libraries/physics.js"></script>
+  <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/lodash.js/0.10.0/lodash.min.js"></script>
+</head>
+<body>
+  <div class="scripts">
+    <script>
+
+    // Web Audio API setup
+    window.AudioContext = window.AudioContext || window.webkitAudioContext;
+    var context = new AudioContext();
+    var gainNode = context.createGain();
+    let isMute = 0;
+
+    var type = /(canvas|webgl)/.test(url.type) ? url.type : 'svg';
+    var two = new Two({
+      type: Two.Types[type],
+      fullscreen: true
+    }).appendTo(document.body);
+
+    var mass = 10;
+    var radius = two.height / 5;
+    var strength = 0.0625;
+    var drag = 0.0;
+
+    var background = two.makeGroup();
+    var foreground = two.makeGroup();
+    var muteBtn = two.makeGroup();
+
+    var origin = [];
+    var spring = [];
+    var particle = [];
+    var physics = [];
+    var points = [];
+
+    var i = 0, j = 0;
+    const PHYSICS_NUM = 5;
+    const BLOB_NUM = 10;
+    const LINK_NUM = 3;
+
+    for (i= 0; i < PHYSICS_NUM; i++){
+      physics[i] = new Physics();
+      points[i] = [];
+    }
+
+    for (i = 0; i < Two.Resolution; i++) {
+
+      var pct = i / Two.Resolution;
+      var theta = pct * Math.PI * 2;
+
+      var ax = radius * Math.cos(theta);
+      var ay = radius * Math.sin(theta);
+
+      var variance = Math.random() * 0.5 + 0.5;
+      var bx = variance * ax;
+      var by = variance * ay;
+
+      for(j = 0; j < PHYSICS_NUM; j++){
+
+        origin[j] = physics[j].makeParticle(mass, ax, ay);
+        particle[j] = physics[j].makeParticle(Math.random() * mass * 0.66 + mass * 0.33, bx, by);
+        spring[j] = physics[j].makeSpring(particle[j], origin[j], strength, drag, 0);
+        origin[j].makeFixed();
+
+        particle[j].shape = two.makeCircle(particle[j].position.x, particle[j].position.y, 5);
+        particle[j].shape.noStroke();
+        particle[j].shape.noFill();
+        particle[j].position = particle[j].shape.translation;
+
+        points[j].push(particle[j].position);
+      }
+    }
+
+    var outer = [BLOB_NUM];
+    var color = [BLOB_NUM];
+    var param_scale = [
+      1.75,
+      3,
+      2,
+      4,
+      2,
+      2,
+      2,
+      1.8,
+      1.2,
+      1.9
+    ];
+    var param_translation = [
+      [0,0],
+      [200,200],
+      [600,500],
+      [-100,-500],
+      [-300,-300],
+      [-500,300],
+      [600,-300],
+      [-600,-600],
+      [800,400],
+      [-800,100]
+    ];
+
+    for(i = 0; i < BLOB_NUM; i++){
+      outer[i] = new Two.Path(points[i%5], true, true);
+      color[i] = getRandomColor();
+      outer[i].fill = color[i].toString(1.0);
+      outer[i].scale = param_scale[i];
+      outer[i].noStroke();
+      outer[i].translation.set(param_translation[i][0],param_translation[i][1]);
+      foreground.add(outer[i]);
+    }
+
+    var titleStyles = {
+      family: '"Shadows Into Light", cursive',
+      size: 200,
+      leading: 50,
+      weight: 900,
+      fill: '#fff'
+    };
+
+    var muteBtnStyles = {
+      family: '"Shadows Into Light", cursive',
+      size: 20,
+      leading: 50,
+      weight: 50,
+      fill: 'white'
+    };
+
+    var title = two.makeText('GADARA', two.width / 2, two.height / 2, titleStyles);
+
+    var muteBtnBox = two.makeRoundedRectangle(100, 70, 100, 50, 20);
+    muteBtnBox.stroke = 'orange';
+    muteBtnBox.fill = 'orange';
+    muteBtnBox.linewidth = 5;
+    var muteBtnTitle = two.makeText('Audio ON', 100, 70, muteBtnStyles);
+    muteBtn.add(muteBtnBox);
+    muteBtn.add(muteBtnTitle);
+    muteBtn.id = 'muteBtn';
+
+    // Update the renderer in order to generate corresponding DOM Elements.
+    two.update();
+
+    var mute = document.querySelector('#muteBtn');
+    //mute.onclick = volumeMute(isMute);
+    mute.onclick = function(){
+      if(isMute == 0) {
+        isMute = 1;
+        muteBtnTitle.value = 'Audio OFF';
+        muteBtnTitle.fill = 'orange';
+        muteBtnBox.fill = 'white';
+      } else {
+        isMute = 0;
+        muteBtnTitle.value = 'Audio ON';
+        muteBtnTitle.fill = 'white';
+        muteBtnBox.fill = 'orange';
+      }
+    };
+
+    window.onload = function() {
+      getAudioBuffer('./sounds/gadara1.mp3', function(sound1) {
+        addLink(outer[7], "https://github.com/gadara-interaction", '#000', sound1);
+      });
+      getAudioBuffer('./sounds/gadara2.mp3', function(sound2) {
+        addLink(outer[8], "https://www.youtube.com/", '#000', sound2);
+      });
+      getAudioBuffer('./sounds/gadara3.mp3', function(sound3) {
+        addLink(outer[9], "https://www.instagram.com/", '#000', sound3);
+      });
+    };
+
+    resize();
+
+    two
+    .bind('resize', resize)
+    .bind('update', function() {
+      physics[0].update();
+      physics[1].update();
+      physics[2].update();
+      physics[3].update();
+      physics[4].update();
+    })
+    .play();
+
+    function resize() {
+      background.translation.set(two.width / 2, two.height / 2);
+      foreground.translation.copy(background.translation);
+      title.translation.set(two.width / 2, two.height / 2);
+      //muteBtn.translation.set(0,0);
+    }
+
+    function getRandomColor() {
+      var color = {
+        r: Math.floor(Math.random() * 255),
+        g: Math.floor(Math.random() * 255),
+        b: Math.floor(Math.random() * 255),
+        toString: function(a) {
+          if (a) {
+            return 'rgba('
+            + color.r + ','
+            + color.g + ','
+            + color.b + ','
+            + a + ')';
+          }
+          return 'rgb('
+          + color.r + ','
+          + color.g + ','
+          + color.b + ')';
+        }
+      };
+      return color;
+    }
+
+    function generateGrid() {
+
+      var two = new Two({
+        type: Two.Types.canvas,
+        width: 16,
+        height: 16,
+        ratio: 2
+      });
+
+      var width = two.width / 2;
+      var height = two.height / 2;
+
+      var background = two.makeRectangle(two.width / 2, two.height / 2, two.width, two.height);
+      background.noStroke().fill = '#efefef';
+
+      var c = two.makeCircle(two.width / 2, two.height / 2, 0.5);
+      c.noStroke().fill = '#999';
+
+      two.update();
+
+      return two.renderer.domElement.toDataURL('image/png');
+
+    }
+
+    function addLink(target, link, colorOnHover, sound){
+
+      $(target._renderer.elem)
+      .css('cursor', 'pointer')
+      .click(function(e) {
+        window.location.href = link;
+      });
+      target._renderer.elem.onmouseover = function(){
+        target.fill = colorOnHover;
+        playSound(sound);
+      };
+      target._renderer.elem.onmouseout = function(){
+        target.fill = getRandomColor();
+      };
+
+    }
+
+    var getAudioBuffer = function(url, fn) {
+      var req = new XMLHttpRequest();
+      // select audio buffer
+      req.responseType = 'arraybuffer';
+
+      req.onreadystatechange = function() {
+        if (req.readyState === 4) {
+          if (req.status === 0 || req.status === 200) {
+            // convert array buffer to audio buffer
+            context.decodeAudioData(req.response, function(buffer) {
+              // fire callback
+              fn(buffer);
+            });
+          }
+        }
+      };
+
+      req.open('GET', url, true);
+      req.send('');
+    };
+
+    var playSound = function(buffer) {
+      // create source
+      var source = context.createBufferSource();
+      // set buffer
+      source.buffer = buffer;
+      // connect to context
+      source.connect(gainNode);
+      gainNode.connect(context.destination);
+      if(isMute==0) gainNode.gain.setValueAtTime(1, context.currentTime);
+      else gainNode.gain.setValueAtTime(0, context.currentTime);
+      // play
+      source.start(0);
+    };
+
+    </script>
+  </div>
+</body>
+</html>
