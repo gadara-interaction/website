@@ -7,5 +7,7 @@
 - sampling sounds exported from KOALA app
 
 ### ToDo
+- adjust blob speed
 - add works page & members page
 - make mobile friendly
+- add blob GIF favicon
