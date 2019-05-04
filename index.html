@@ -22,7 +22,7 @@
     window.AudioContext = window.AudioContext || window.webkitAudioContext;
     var context = new AudioContext();
     var gainNode = context.createGain();
-    let isMute = 0;
+    let isMute = 1;
 
     var type = /(canvas|webgl)/.test(url.type) ? url.type : 'svg';
     var two = new Two({
@@ -30,7 +30,7 @@
       fullscreen: true
     }).appendTo(document.body);
 
-    var mass = 10;
+    var mass = 30;
     var radius = two.height / 5;
     var strength = 0.0625;
     var drag = 0.0;
@@ -122,7 +122,7 @@
 
     var titleStyles = {
       family: '"Shadows Into Light", cursive',
-      size: 200,
+      size: 150,
       leading: 50,
       weight: 900,
       fill: '#fff'
@@ -142,10 +142,15 @@
     muteBtnBox.stroke = 'orange';
     muteBtnBox.fill = 'orange';
     muteBtnBox.linewidth = 5;
-    var muteBtnTitle = two.makeText('Audio ON', 100, 70, muteBtnStyles);
+    var muteBtnTitle = two.makeText('Audio OFF', 100, 70, muteBtnStyles);
     muteBtn.add(muteBtnBox);
     muteBtn.add(muteBtnTitle);
     muteBtn.id = 'muteBtn';
+
+    //Default off
+    muteBtnTitle.value = 'Audio OFF';
+    muteBtnTitle.fill = 'orange';
+    muteBtnBox.fill = 'white';
 
     // Update the renderer in order to generate corresponding DOM Elements.
     two.update();
@@ -168,13 +173,13 @@
 
     window.onload = function() {
       getAudioBuffer('./sounds/gadara1.mp3', function(sound1) {
-        addLink(outer[7], "https://github.com/gadara-interaction", '#000', sound1);
+        addLink(outer[4], "about.html", '#000', sound1);
       });
       getAudioBuffer('./sounds/gadara2.mp3', function(sound2) {
-        addLink(outer[8], "https://www.youtube.com/", '#000', sound2);
+        addLink(outer[5], "about.html", '#000', sound2);
       });
       getAudioBuffer('./sounds/gadara3.mp3', function(sound3) {
-        addLink(outer[9], "https://www.instagram.com/", '#000', sound3);
+        addLink(outer[6], "about.html", '#000', sound3);
       });
     };
 
